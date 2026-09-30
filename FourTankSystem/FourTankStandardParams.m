@@ -10,8 +10,8 @@ function p = FourTankStandardParams()
     A4 = 380.1327; %[cm2] Cross sectional area of tank 4
     
     
-    gamma1 = 0.45; % Flow distribution constant. Valve 1
-    gamma2 = 0.4; % Flow distribution constant. Valve 2
+    gamma1 = 0.6; % Flow distribution constant. Valve 1
+    gamma2 = 0.7; % Flow distribution constant. Valve 2
     
     g = 981; %[cm/s2] The acceleration of gravity
     rho = 1.00; %[g/cm3] Density of water
