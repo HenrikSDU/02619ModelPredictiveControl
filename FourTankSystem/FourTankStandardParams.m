@@ -18,4 +18,6 @@ function p = FourTankStandardParams()
     
     p = [a1;a2;a3;a4; A1;A2;A3;A4; gamma1;gamma2; g; rho];
 
+    At  = p(5:8);
+
 end

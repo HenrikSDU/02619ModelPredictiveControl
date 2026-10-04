@@ -6,9 +6,6 @@ close all;
 
 p = FourTankStandardParams();
 
-rho = p(12);
-At  = p(5:8);
-
 F3 = 50;
 F4 = 30;
 
