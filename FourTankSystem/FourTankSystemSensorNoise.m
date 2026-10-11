@@ -2,6 +2,8 @@ function y = FourTankSystemSensorNoise(xk,p,sigma_h)
     % Extract dimensions and density from parameters
     rho = p(12,1);
     A = p(5:8);
+
+    rng(10);
     
     if nargin < 3
         % Standard deviation of level measurement noise

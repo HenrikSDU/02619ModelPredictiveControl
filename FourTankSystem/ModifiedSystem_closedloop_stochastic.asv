@@ -1,0 +1,248 @@
+close all;
+clear;
+clc;
+
+%% Parameters
+
+p = FourTankStandardParams();
+
+%% Simulation Settings
+
+Ts = 10;
+sim_min = 20;
+tf = sim_min*60;
+
+t = (0:Ts:tf)';
+N = length(t);
+
+nx = 4; nu = 2; ny = 4; nz = 2;
+
+%% Piecewise-constant stochastic disturbances
+
+disturbanceType = 'piecewise';
+
+[d, F3, F4] = GenerateDisturbances(t, Ts, disturbanceType, 1);
+
+%% Measurement noise
+
+sigma_h = 0.1;  % Standard deviation [cm]
+
+rng(10);  % Reproducible measurement-noise sequence
+
+%% Initial conditions and setpoints
+
+x0 = zeros(nx,1);        % Initially empty tanks
+
+zbar = [30;25];          % Setpoints [cm]
+
+umin = 0;
+umax = 1000;
+
+us = [250;250];          % Nominal pump flows [cm^3/s]
+
+%% Controller parameters
+
+Kp = [10;10];
+
+Ti_PI  = [40;40];
+Ti_PID = [40;40];
+
+Td_PID = [5;5];
+
+controllerTypes = {'P','PI','PID'};
+
+% Store simulation results
+results = struct();
+
+%% Run simulations for P, PI, and PID
+
+for j = 1:length(controllerTypes)
+
+    controllerType = controllerTypes{j};
+
+    switch controllerType
+
+        case 'P'
+            Ti = [Inf;Inf];
+            Td = [0;0];
+
+        case 'PI'
+            Ti = Ti_PI;
+            Td = [0;0];
+
+        case 'PID'
+            Ti = Ti_PID;
+            Td = Td_PID;
+
+    end
+
+    % Initialize controller states
+
+    i_state = zeros(2,1);
+
+    % Initialize previous measurement
+    y_prev = zeros(2,1);
+
+    % Initialize simulation variables
+
+    x = zeros(nx,N);
+    y = zeros(ny,N);
+    z = zeros(nz,N);
+    u = zeros(nu,N);
+
+    X = zeros(0,nx);
+    T = zeros(0,1);
+
+    x(:,1) = x0;
+
+    % Simulation loop
+
+    for k = 1:N-1
+
+        % True outputs
+        z(:,k) = FourTankSystemOutput(x(:,k),p);
+
+        % Sensor measurements
+        y(:,k) = FourTankSystemSensor(x(:,k),p);
+
+        % Sampling interval
+        Ts_k = t(k+1) - t(k);
+
+        % PID controller uses measured levels
+        [u(:,k), i_state, y_prev] = PIDControl( ...
+            i_state, y_prev, ...
+            zbar, y(1:2,k), us, ...
+            Kp, Ti, Td, Ts_k, ...
+            umin, umax, controllerType);
+
+        % Inputs and disturbances held constant
+        % during [t(k), t(k+1))
+        uk = u(:,k);
+        dk = d(:,k);
+
+        % Simulate nonlinear system
+        odefun = @(time,state) ModifiedFourTankSystem( ...
+            time, state, uk, p, dk);
+
+        [Tk,Xk] = ode45( ...
+            odefun, [t(k) t(k+1)], x(:,k));
+
+        % Final state of current interval
+        x(:,k+1) = Xk(end,:)';
+
+        % Store continuous-time trajectory
+        T = [T; Tk];
+        X = [X; Xk];
+
+    end
+
+    % Final sampling instant
+
+    z(:,N) = FourTankSystemOutput(x(:,N),p);
+    y(:,N) = FourTankSystemSensor(x(:,N),p);
+
+    u(:,N) = u(:,N-1);
+
+    % Save results
+
+    results.(controllerType).t = t;
+    results.(controllerType).x = x;
+    results.(controllerType).y = y;
+    results.(controllerType).z = z;
+    results.(controllerType).u = u;
+
+end
+
+%% Save the disturbance sequence
+
+results.disturbanceType = disturbanceType;
+results.d = d;
+results.F3 = F3;
+results.F4 = F4;
+
+%% Plot disturbances
+
+figure("Color","w");
+
+stairs(t/60,F3,'LineWidth',1.5);
+hold on;
+stairs(t/60,F4,'LineWidth',1.5);
+
+yline(20,'k:','LineWidth',1.2);
+
+xlabel('Time [min]');
+ylabel('Disturbance flow [cm^3/s]');
+legend('F_3','F_4','Mean disturbance','Location','best');
+title('Piecewise-Constant Stochastic Disturbances');
+grid on;
+xlim([0 sim_min]);
+
+%% Compare P, PI, and PID controllers
+
+figure("Color","w");
+
+% --- Tank 1 ---
+subplot(2,2,1);
+
+plot(t/60,results.P.z(1,:),'r--','LineWidth',1.5);
+hold on;
+plot(t/60,results.PI.z(1,:),'b-.','LineWidth',1.5);
+plot(t/60,results.PID.z(1,:),'LineWidth',1.5);
+
+yline(zbar(1),'k:','LineWidth',1.5);
+
+title('Tank 1');
+xlabel('Time [min]');
+ylabel('h_1 [cm]');
+legend('P','PI','PID','Setpoint','Location','best');
+grid on;
+xlim([0 sim_min]);
+
+% --- Tank 2 ---
+subplot(2,2,2);
+
+plot(t/60,results.P.z(2,:),'r--','LineWidth',1.5);
+hold on;
+plot(t/60,results.PI.z(2,:),'b-.','LineWidth',1.5);
+plot(t/60,results.PID.z(2,:),'LineWidth',1.5);
+
+yline(zbar(2),'k:','LineWidth',1.5);
+
+title('Tank 2');
+xlabel('Time [min]');
+ylabel('h_2 [cm]');
+legend('P','PI','PID','Setpoint','Location','best');
+grid on;
+xlim([0 sim_min]);
+
+% --- Pump 1 ---
+subplot(2,2,3);
+
+plot(t/60,results.P.u(1,:),'r--','LineWidth',1.5);
+hold on;
+plot(t/60,results.PI.u(1,:),'b-.','LineWidth',1.5);
+plot(t/60,results.PID.u(1,:),'LineWidth',1.5);
+
+title('Pump 1 Input');
+xlabel('Time [min]');
+ylabel('F_1 [cm^3/s]');
+legend('P','PI','PID','Location','best');
+grid on;
+xlim([0 sim_min]);
+
+% --- Pump 2 ---
+subplot(2,2,4);
+
+plot(t/60,results.P.u(2,:),'r--','LineWidth',1.5);
+hold on;
+plot(t/60,results.PI.u(2,:),'b-.','LineWidth',1.5);
+plot(t/60,results.PID.u(2,:),'LineWidth',1.5);
+
+title('Pump 2 Input');
+xlabel('Time [min]');
+ylabel('F_2 [cm^3/s]');
+legend('P','PI','PID','Location','best');
+grid on;
+xlim([0 sim_min]);
+
+sgtitle('P, PI, and PID Comparison with Stochastic Disturbances');

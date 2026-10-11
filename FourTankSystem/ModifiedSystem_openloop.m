@@ -58,11 +58,11 @@ u = [F1;
 
 %% Fixed disturbances
 
-F3 = 20; % [cm3/s]
-F4 = 20; % [cm3/s]
+disturbanceType = 'fixed';
 
-d = [repmat(F3,1,N);
-     repmat(F4,1,N)];
+[d, F3, F4] = GenerateDisturbances(t, Ts, disturbanceType, 1);
+F3 = F3(1);
+F4 = F4(1);
 
 %% Simulation
 
@@ -182,24 +182,9 @@ xlim([0 sim_min]);
 
 %% Stochastic piecewise-constant disturbances
 
-% Mean disturbance
-F3_mean = 20; % [cm3/s]
-F4_mean = 20; % [cm3/s]
+disturbanceType = 'piecewise';
 
-% Standard deviation
-sigma_F3 = 2; % [cm3/s]
-sigma_F4 = 2; % [cm3/s]
-
-% Generate one disturbance value for each sampling interval.
-% The value remains constant during [t_k,t_{k+1}).
-
-rng(1); % Reproducible random sequence
-
-F3 = F3_mean + sigma_F3*randn(1,N);
-F4 = F4_mean + sigma_F4*randn(1,N);
-
-d = [F3;
-     F4];
+[d, F3, F4] = GenerateDisturbances(t, Ts, disturbanceType, 1);
 
 %% Simulation
 
@@ -325,24 +310,9 @@ xlim([0 sim_min]);
 
 %% Langevin disturbance parameters
 
-% Mean disturbance
-F3_mean = 20; % [cm3/s]
-F4_mean = 20; % [cm3/s]
+disturbanceType = 'langevin';
 
-% Mean-reversion rates
-aF3 = 0.01; % [1/s]
-aF4 = 0.01; % [1/s]
-
-% Diffusion coefficients
-sigma_F3 = 0.2; % [cm3/s^(3/2)]
-sigma_F4 = 0.2; % [cm3/s^(3/2)]
-
-% Initial disturbance values
-F3_0 = F3_mean;
-F4_0 = F4_mean;
-
-d = zeros(2,N);
-d(:,1) = [F3_0; F4_0];
+[d, F3, F4] = GenerateDisturbances(t, Ts, disturbanceType, 1);
 
 %% Random number generator
 
@@ -379,18 +349,6 @@ for k = 1:N-1
 
     x(:,k+1) = Xk(end,:)';
 
-    % Update Langevin disturbances
-
-    d(:,k+1) = LangevinDisturbance( ...
-        d(:,k), ...
-        Ts, ...
-        aF3, ...
-        aF4, ...
-        F3_mean, ...
-        F4_mean, ...
-        sigma_F3, ...
-        sigma_F4);
-
 end
 
 % Outputs at final sampling instant
@@ -426,12 +384,9 @@ plot(t/60,F3,'LineWidth',1.5);
 hold on;
 plot(t/60,F4,'LineWidth',1.5);
 
-yline(F3_mean,'--');
-yline(F4_mean,'--');
-
 xlabel('Time [min]');
 ylabel('Disturbance flow [cm^3/s]');
-legend('F_3','F_4','Mean F_3','Mean F_4');
+legend('F_3','F_4');
 title('Langevin Disturbances');
 grid on;
 xlim([0 sim_min]);

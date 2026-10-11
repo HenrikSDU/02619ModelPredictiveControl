@@ -6,11 +6,6 @@ clc;
 
 p = FourTankStandardParams();
 
-F3 = 50;
-F4 = 30;
-
-d = [F3; F4];
-
 %% Simulation Settings
 
 Ts = 10;
@@ -21,6 +16,14 @@ t = (0:Ts:tf)';
 N = length(t);
 
 nx = 4; nu = 2; ny = 4; nz = 2;
+
+%% Fixed disturbances
+
+disturbanceType = 'fixed';
+
+[d, F3, F4] = GenerateDisturbances(t, Ts, disturbanceType, 1);
+F3 = F3(1);
+F4 = F4(1);
 
 %% Initial conditions and setpoints
 
@@ -69,7 +72,7 @@ for j = 1:length(controllerTypes)
 
     % Initialize controller states
     i_state = zeros(2,1);
-    z_prev = zeros(2,1);
+    y_prev = zeros(2,1);
 
     % Initialize simulation variables
     x = zeros(nx,N);
@@ -90,7 +93,7 @@ for j = 1:length(controllerTypes)
         z(:,k) = FourTankSystemOutput(x(:,k),p);
 
         Ts_k = t(k+1) - t(k);
-        [u(:,k), i_state, z_prev] = PIDControl(i_state, z_prev, zbar, z(1:2,k), us, Kp, Ti, Td, Ts_k, umin, umax, controllerType);
+        [u(:,k), i_state, y_prev] = PIDControl(i_state, y_prev, zbar, y(1:2,k), us, Kp, Ti, Td, Ts_k, umin, umax, controllerType);
 
         % Simulate from time t[k] to time t[k+1]
         odefun = @(t,x) ModifiedFourTankSystem(t,x,u(:,k),p,d);
