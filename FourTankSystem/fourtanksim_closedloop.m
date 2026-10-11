@@ -44,8 +44,6 @@ F1 = 300; % [cm3/s] Flow rate from pump 1
 F2 = 300; % [cm3/s] Flow rate from pump 2
 
 
-
-
 x0 = [m10; m20; m30; m40];
 
 %% Simulate closed loop
@@ -90,6 +88,7 @@ k = N;
 y(:,k) = FourTankSystemSensor(x(:,k),p);
 z(:,k) = FourTankSystemOutput(x(:,k),p);
 u(:,k) = u(:,k-1);
+
 %% Plotting Results
 figure;
 

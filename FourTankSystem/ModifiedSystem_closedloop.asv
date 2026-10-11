@@ -1,0 +1,88 @@
+close all;
+clear;
+clc;
+
+%% Parameters
+
+p = FourTankStandardParams();
+
+F3 = 50;
+F4 = 30;
+
+d = [F3; F4];
+
+%% Simulation Settings
+
+Ts = 10;
+sim_min = 20;
+tf = sim_min*60;
+
+t = (0:Ts:tf)';
+N = length(t);
+
+nx = 4;
+nu = 2;
+
+%% Initial conditions and setpoints
+
+x0 = zeros(nx,1); % Initially empty tanks
+
+zbar = [30;25]; % Setpoints for Tank 1 and Tank 2 heights [cm]
+
+umin = 0; 
+umax = 1000; % Steady-state inputs (nominal flow rates) [cm^3/s]
+
+us = [250;250]; 
+
+%% Controller parameters
+
+% Proportional gains
+Kp = [10;10];
+
+% Integral time constants [s]
+Ti_PI  = [40;40];
+Ti_PID = [40;40];
+
+% Derivative time constants [s]
+Td_PID = [5;5];
+
+%% Run the three closed-loop simulations
+i_state = zeros(2, 1); 
+
+x = zeros(nx,N);
+y = zeros(ny,N);
+z = zeros(nz,N);
+
+X = zeros(0,nx);
+T = zeros(0,1);
+
+x(:,1) = x0; % Initial condition
+
+for k = 1:N-1
+    % Sensor function and output function
+    y(:,k) = FourTankSystemSensor(x(:,k),p);
+    z(:,k) = FourTankSystemOutput(x(:,k),p);
+
+    Ts = t(k+1) - t(k);
+
+    % Calculate the control input using the selected controller
+    [u(:,k), i_state, d_state] = PIDControl( ...
+       i_state, d_state, r, z(1:2,k), ...
+        us, Kc, Ti, Td, Ts, umin, umax, controllerType);
+
+    % Simulate from time t[k] to time t[k+1]
+    [Tk,Xk] = ode15s(@FourTankSystem, ...
+        [t(k) t(k+1)], x(:,k), [], u(:,k), p);
+
+    x(:,k+1) = Xk(end,:)';
+
+    % Store the simulated results (for plotting)
+    T = [T; Tk];
+    X = [X; Xk];
+end
+
+k = N;
+% Sensor function and output function
+y(:,k) = FourTankSystemSensor(x(:,k),p);
+z(:,k) = FourTankSystemOutput(x(:,k),p);
+u(:,k) = u(:,k-1);
