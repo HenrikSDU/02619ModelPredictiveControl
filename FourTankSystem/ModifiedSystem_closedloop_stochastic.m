@@ -102,24 +102,10 @@ for j = 1:length(controllerTypes)
         % Sampling interval
         Ts_k = t(k+1) - t(k);
 
-        % PID controller uses measured levels
-        [u(:,k), i_state, y_prev] = PIDControl( ...
-            i_state, y_prev, ...
-            zbar, y(1:2,k), us, ...
-            Kp, Ti, Td, Ts_k, ...
-            umin, umax, controllerType);
+        [u(:,k), i_state, y_prev] = PIDControl(i_state, y_prev, zbar, y(1:2,k), us, Kp, Ti, Td, Ts_k, umin, umax, controllerType);
 
-        % Inputs and disturbances held constant
-        % during [t(k), t(k+1))
-        uk = u(:,k);
-        dk = d(:,k);
-
-        % Simulate nonlinear system
-        odefun = @(time,state) ModifiedFourTankSystem( ...
-            time, state, uk, p, dk);
-
-        [Tk,Xk] = ode45( ...
-            odefun, [t(k) t(k+1)], x(:,k));
+        odefun = @(time,state) ModifiedFourTankSystem(time, state, u(:,k), p, d(:,k));
+	[Tk,Xk] = ode45(odefun, [t(k) t(k+1)], x(:,k));
 
         % Final state of current interval
         x(:,k+1) = Xk(end,:)';
@@ -308,23 +294,10 @@ for j = 1:length(controllerTypes)
         Ts_k = t(k+1) - t(k);
 
         % PID controller uses measured levels
-        [u(:,k), i_state, y_prev] = PIDControl( ...
-            i_state, y_prev, ...
-            zbar, y(1:2,k), us, ...
-            Kp, Ti, Td, Ts_k, ...
-            umin, umax, controllerType);
+        [u(:,k), i_state, y_prev] = PIDControl(i_state, y_prev, zbar, y(1:2,k), us, Kp, Ti, Td, Ts_k, umin, umax, controllerType);
 
-        % Inputs and disturbances held constant
-        % during [t(k), t(k+1))
-        uk = u(:,k);
-        dk = d(:,k);
-
-        % Simulate nonlinear system
-        odefun = @(time,state) ModifiedFourTankSystem( ...
-            time, state, uk, p, dk);
-
-        [Tk,Xk] = ode45( ...
-            odefun, [t(k) t(k+1)], x(:,k));
+        odefun = @(time,state) ModifiedFourTankSystem(time, state, u(:,k), p, d(:,k));
+	[Tk,Xk] = ode45(odefun, [t(k) t(k+1)], x(:,k));
 
         % Final state of current interval
         x(:,k+1) = Xk(end,:)';
