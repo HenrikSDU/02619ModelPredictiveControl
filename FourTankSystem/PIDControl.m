@@ -1,9 +1,9 @@
-function [u, i_state, d_state] = PIDControl(i_state, d_state, r, y, us, Kp, Ti, Td, Ts, umin, umax, controllerType)
+function [u, i_state, y_prev] = PIDControl(i_state, y_prev, r, y, us, Kp, Ti, Td, Ts, umin, umax, controllerType)
 
     e = r - y;
     P = Kp .* e;
     I = i_state;
-    D = -Kp .* Td .* d_state;
+    D = -Kp .* Td .* (y - y_prev) ./ Ts;
 
     switch upper(controllerType)
 
@@ -12,19 +12,18 @@ function [u, i_state, d_state] = PIDControl(i_state, d_state, r, y, us, Kp, Ti, 
 
         case 'PI'
             v = us + P + I;
-            Ki = Kp ./ Ti;
-            i_state= i_state + Ki .* e .* Ts;
 
         case 'PID'
             v = us + P + I + D;
-            Ki = Kp ./ Ti;
-            i_state= i_state + Ki .* e .* Ts;
-            d_state = (y - d_state) ./ Ts;
 
         otherwise
             error('Unknown controller type. Use P, PI, or PID.');
     end
 
-    u = min(umax, max(umin, v));
+    u = min(umax, max(umin, v)); % saturation
+    Ki = Kp ./ Ti;
+    i_state = i_state + Ts * (Ki .* e + (u - v) ./ Ti); % anti-windup
+
+    y_prev = y;
 
 end

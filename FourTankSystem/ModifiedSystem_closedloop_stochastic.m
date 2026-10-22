@@ -105,7 +105,7 @@ for j = 1:length(controllerTypes)
         [u(:,k), i_state, y_prev] = PIDControl(i_state, y_prev, zbar, y(1:2,k), us, Kp, Ti, Td, Ts_k, umin, umax, controllerType);
 
         odefun = @(time,state) ModifiedFourTankSystem(time, state, u(:,k), p, d(:,k));
-	[Tk,Xk] = ode45(odefun, [t(k) t(k+1)], x(:,k));
+	    [Tk,Xk] = ode45(odefun, [t(k) t(k+1)], x(:,k));
 
         % Final state of current interval
         x(:,k+1) = Xk(end,:)';
