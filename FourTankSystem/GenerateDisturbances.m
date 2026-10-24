@@ -60,7 +60,7 @@ function [d, F3, F4] = GenerateDisturbances(t, Ts, disturbanceType, seed)
             % Initial disturbance values
             d(:,1) = [F3_mean; F4_mean];
 
-            % Generate correlated disturbance trajectories
+            % Generate independent disturbance trajectories, each correlated over time
             for k = 1:N-1
 
                 d(:,k+1) = LangevinDisturbance( ...

@@ -6,33 +6,27 @@ close all;
 
 p = FourTankStandardParams();
 
-F3 = 50;
-F4 = 30;
-
-d = [F3; F4];
-
 %% Steady-state operating point
 
-F1 = 250; 
-F2 = 325;
-
-us = [F1; F2];
+[us,d] = FourTankOperatingInputs();
 
 % Initial guess
 xs0 = [12000;9000;5000;2500];
 
 % Find steady-state masses
-xs = fsolve(@ModifiedFourTankSystemWrap, xs0, [], us, p, d);
+xss = fsolve(@ModifiedFourTankSystemWrap, xs0, [], us, p, d);
+
+hss = FourTankSystemLevels(xss,p);
 
 % Steady-state measurements
-ys = FourTankSystemSensor(xs, p);
-zs = FourTankSystemOutput(xs, p);
+yss = FourTankSystemSensor(xss, p);
+zss = FourTankSystemOutput(xss, p);
 
 fprintf('Steady-state levels:\n');
-disp(ys);
+disp(yss);
 
 fprintf('Steady-state masses:\n');
-disp(xs);
+disp(xss);
 
 %% Simulation settings
 
@@ -42,20 +36,20 @@ stepSizes = [0.10 0.25 0.50];
 
 %% Simulate steps in F1
 
-[T10_F1, X10_F1, H10_F1] = simulateStep(us, xs, p, 0.10, 1, tend, d);
+[T10_F1, X10_F1, H10_F1] = simulateStep(us, xss, p, 0.10, 1, tend, d);
 
-[T25_F1, X25_F1, H25_F1] = simulateStep(us, xs, p, 0.25, 1, tend, d);
+[T25_F1, X25_F1, H25_F1] = simulateStep(us, xss, p, 0.25, 1, tend, d);
 
-[T50_F1, X50_F1, H50_F1] = simulateStep(us, xs, p, 0.50, 1, tend, d);
+[T50_F1, X50_F1, H50_F1] = simulateStep(us, xss, p, 0.50, 1, tend, d);
 
 
 % Plots
 
 figure("Color","w");
 
-for i = 1:4
+for i = 1:2
 
-    subplot(2,2,i)
+    subplot(2,1,i)
 
     plot(T10_F1/60, H10_F1(:,i), 'LineWidth', 1.2)
     hold on
@@ -69,16 +63,12 @@ for i = 1:4
     legend('10%', '25%', '50%')
     grid on
 
-    if i==3
-        ylim([6 9]) % abs()
-    end
-
 end
 
 sgtitle('Nonlinear step responses F_1')
 
 % Initial steady-state levels
-h0 = ys(:)';
+h0 = hss(:)';
 
 % Input step magnitudes
 dF1_10 = 0.10 * us(1);
@@ -93,9 +83,9 @@ S50_F1 = (H50_F1 - h0) / dF1_50;
 % Plot normalized responses
 figure("Color","w");
 
-for i = 1:4
+for i = 1:2
 
-    subplot(2,2,i)
+    subplot(2,1,i)
 
     plot(T10_F1/60, S10_F1(:,i), 'LineWidth', 1.2)
     hold on
@@ -109,10 +99,6 @@ for i = 1:4
     legend('10% step','25% step','50% step', ...
            'Location','best')
 
-    if i==3
-        ylim([-1 1]) % abs()
-    end
-
     grid on
 
 end
@@ -121,19 +107,19 @@ sgtitle('Normalized nonlinear step responses F_1')
 
 %% Simulate steps in F2
 
-[T10_F2, X10_F2, H10_F2] = simulateStep(us, xs, p, 0.10, 2, tend, d);
+[T10_F2, X10_F2, H10_F2] = simulateStep(us, xss, p, 0.10, 2, tend, d);
 
-[T25_F2, X25_F2, H25_F2] = simulateStep(us, xs, p, 0.25, 2, tend, d);
+[T25_F2, X25_F2, H25_F2] = simulateStep(us, xss, p, 0.25, 2, tend, d);
 
-[T50_F2, X50_F2, H50_F2] = simulateStep(us, xs, p, 0.50, 2, tend, d);
+[T50_F2, X50_F2, H50_F2] = simulateStep(us, xss, p, 0.50, 2, tend, d);
 
 % PLots
 
 figure("Color","w");
 
-for i = 1:4
+for i = 1:2
 
-    subplot(2,2,i)
+    subplot(2,1,i)
     
 
     plot(T10_F2/60, H10_F2(:,i), 'LineWidth', 1.2)
@@ -149,16 +135,12 @@ for i = 1:4
 
     grid on
 
-    if i==4
-        ylim([5 6.5]) % abs()
-    end
-
 end
 
 sgtitle('Nonlinear step responses F_2')
 
 % Initial steady-state levels
-h0 = ys(:)';
+h0 = hss(:)';
 
 % Input step magnitudes
 dF2_10 = 0.10 * us(2);
@@ -173,9 +155,9 @@ S50_F2 = (H50_F2 - h0) / dF2_50;
 % Plot normalized responses
 figure("Color","w");
 
-for i = 1:4
+for i = 1:2
 
-    subplot(2,2,i)
+    subplot(2,1,i)
 
     plot(T10_F2/60, S10_F2(:,i), 'LineWidth', 1.2)
     hold on
@@ -189,10 +171,6 @@ for i = 1:4
     legend('10% step','25% step','50% step', ...
            'Location','best')
 
-    if i==4
-        ylim([-1 1]) % abs()
-    end
-
     grid on
 
 end
@@ -202,9 +180,9 @@ sgtitle('Normalized nonlinear step responses F_2')
 
 %% With process and measurement noise
 
-dMean = [F3; F4];
+dMean = d;
 
-Ts = 10;
+Ts = 5;
 
 %% Noise levels
 
@@ -221,7 +199,7 @@ sigmaMeasurement_high   = 0.30;
 rng(1);
 
 % Initial steady-state output
-h0 = ys(:)';
+y0 = yss(:)';
 
 % Actual input step magnitudes
 dF1_10 = 0.10 * us(1);
@@ -245,21 +223,21 @@ for n = 1:3
     % Simulate 10% step
 
     [T10,X10,H10,Y10,D10] = simulateStepNoise( ...
-        us, xs, p, ...
+        us, xss, p, ...
         0.10, 1, tend, dMean, Ts, ...
         sigmaProcess(n), sigmaMeasurement(n));
 
     % Simulate 25% step
 
     [T25,X25,H25,Y25,D25] = simulateStepNoise( ...
-        us, xs, p, ...
+        us, xss, p, ...
         0.25, 1, tend, dMean, Ts, ...
         sigmaProcess(n), sigmaMeasurement(n));
 
     % Simulate 50% step
 
     [T50,X50,H50,Y50,D50] = simulateStepNoise( ...
-        us, xs, p, ...
+        us, xss, p, ...
         0.50, 1, tend, dMean, Ts, ...
         sigmaProcess(n), sigmaMeasurement(n));
 
@@ -267,9 +245,9 @@ for n = 1:3
 
     figure("Color","w");
 
-    for i = 1:4
+    for i = 1:2
 
-        subplot(2,2,i)
+        subplot(2,1,i)
 
         plot(T10/60,Y10(:,i),'LineWidth',1.0)
         hold on
@@ -282,10 +260,6 @@ for n = 1:3
 
         legend('10%','25%','50%','Location','best')
 
-        if i==3
-            ylim([5 10]) % abs()
-        end
-
         grid on
 
     end
@@ -293,16 +267,16 @@ for n = 1:3
     sgtitle(sprintf('F_1 step responses - %s',noiseNames{n}));
 
     % Normalize measured responses
-    S10 = (Y10 - h0) / dF1_10;
-    S25 = (Y25 - h0) / dF1_25;
-    S50 = (Y50 - h0) / dF1_50;
+    S10 = (Y10 - y0) / dF1_10;
+    S25 = (Y25 - y0) / dF1_25;
+    S50 = (Y50 - y0) / dF1_50;
 
     % Plot normalized responses
     figure("Color","w");
 
-    for i = 1:4
+    for i = 1:2
 
-        subplot(2,2,i)
+        subplot(2,1,i)
 
         plot(T10/60, S10(:,i), 'LineWidth', 1.0)
         hold on
@@ -315,10 +289,6 @@ for n = 1:3
 
         legend('10% step','25% step','50% step', ...
                'Location','best')
-
-        if i==3
-            ylim([-1 1]) % abs()
-        end
 
         grid on
 
@@ -333,7 +303,7 @@ end
 %% Simulate steps in F2
 
 % Initial steady-state output
-h0 = ys(:)';
+y0 = yss(:)';
 
 % Actual input step magnitudes
 dF2_10 = 0.10 * us(2);
@@ -345,21 +315,21 @@ for n = 1:3
     % Simulate 10% step
 
     [T10,X10,H10,Y10,D10] = simulateStepNoise( ...
-        us, xs, p, ...
+        us, xss, p, ...
         0.10, 2, tend, dMean, Ts, ...
         sigmaProcess(n), sigmaMeasurement(n));
 
     % Simulate 25% step
 
     [T25,X25,H25,Y25,D25] = simulateStepNoise( ...
-        us, xs, p, ...
+        us, xss, p, ...
         0.25, 2, tend, dMean, Ts, ...
         sigmaProcess(n), sigmaMeasurement(n));
 
     % Simulate 50% step
 
     [T50,X50,H50,Y50,D50] = simulateStepNoise( ...
-        us, xs, p, ...
+        us, xss, p, ...
         0.50, 2, tend, dMean, Ts, ...
         sigmaProcess(n), sigmaMeasurement(n));
 
@@ -367,9 +337,9 @@ for n = 1:3
 
     figure("Color","w");
 
-    for i = 1:4
+    for i = 1:2
 
-        subplot(2,2,i)
+        subplot(2,1,i)
 
         plot(T10/60,Y10(:,i),'LineWidth',1.0)
         hold on
@@ -382,10 +352,6 @@ for n = 1:3
 
         legend('10%','25%','50%','Location','best')
 
-        if i==4
-            ylim([4 7]) % abs()
-        end
-
         grid on
 
     end
@@ -394,16 +360,16 @@ for n = 1:3
 
 
     % Normalize measured responses
-    S10 = (Y10 - h0) / dF2_10;
-    S25 = (Y25 - h0) / dF2_25;
-    S50 = (Y50 - h0) / dF2_50;
+    S10 = (Y10 - y0) / dF2_10;
+    S25 = (Y25 - y0) / dF2_25;
+    S50 = (Y50 - y0) / dF2_50;
 
     % Plot normalized responses
     figure("Color","w");
 
-    for i = 1:4
+    for i = 1:2
 
-        subplot(2,2,i)
+        subplot(2,1,i)
 
         plot(T10/60, S10(:,i), 'LineWidth', 1.0)
         hold on
@@ -417,10 +383,6 @@ for n = 1:3
         legend('10% step','25% step','50% step', ...
                'Location','best')
 
-        if i==4
-            ylim([-1 1]) % abs()
-        end
-
         grid on
 
     end
@@ -430,34 +392,37 @@ for n = 1:3
 
 end
 
-%% Q4: Identification from normalized steps
+%% Identification from normalized steps
 
-close all;
+% close all;
 
 Tsid = 5;                              % [s] uniform sampling
 tu   = (0:Tsid:tend)';
 Nu   = numel(tu);
 
-S1 = interp1(T10_F1, S10_F1, tu);      % N x 4  (response to F1)
-S2 = interp1(T10_F2, S10_F2, tu);      % N x 4  (response to F2)
+S1 = interp1(T10_F1, S10_F1(:,1:2), tu);      % N x 2  (response to F1)
+S2 = interp1(T10_F2, S10_F2(:,1:2), tu);      % N x 2  (response to F2)
 Sid = {S1, S2};
 
 np = [1 2;      % G11 G12
-      2 1;      % G21 G22
-      0 1;      % G31 = 0, G32
-      1 0];     % G41, G42 = 0
+      2 1];      % G21 G22
 
 opt = tfestOptions('InitialCondition','zero');
-G = tf(zeros(4,2));
-fitPct = nan(4,2);
+G = tf(zeros(2,2));
+fitPct = nan(2,2);
 
 for j = 1:2
-    for i = 1:4
-        if np(i,j) == 0, continue; end
-        data  = iddata(Sid{j}(:,i), ones(Nu,1), Tsid);   % unit step input
-        Gij   = tfest(data, np(i,j), 0, opt);
+    for i = 1:2
+        nPre = 10;  % >2 (maximum order)
+        yref = Sid{j}(:,i); 
+        data = iddata( ...
+            [zeros(nPre,1); yref], ...
+            [zeros(nPre,1); ones(Nu,1)], ...
+            Tsid);
+        data.InterSample = 'zoh';
+        Gij   = tfest(data, np(i,j), 0, 'Ts', 0, opt);
         G(i,j) = tf(Gij);
-        fitPct(i,j) = goodnessOfFit(lsim(Gij,ones(Nu,1),tu), Sid{j}(:,i),'NRMSE')*100;
+        fitPct(i,j) = 100*(1-goodnessOfFit(lsim(Gij,ones(Nu,1),tu), Sid{j}(:,i),'NRMSE'));
     end
 end
 
@@ -473,8 +438,8 @@ amp   = {'25%','50%'};
 
 for j = 1:2
     figure('Color','w');
-    for i = 1:4
-        subplot(2,2,i); hold on; grid on
+    for i = 1:2
+        subplot(2,1,i); hold on; grid on
 
         for a = 1:2
             Sn = interp1(Tcell{j,a}, Scell{j,a}(:,i), tu, 'linear', 'extrap');
@@ -489,6 +454,7 @@ for j = 1:2
 
         xlabel('Time [min]');
         ylabel(sprintf('S_{%d%d}', i, j));
+
         legend('Location','best');
     end
     sgtitle(sprintf('Identified model vs nonlinear, input F_%d', j));
@@ -496,21 +462,52 @@ end
 
 %% Markov Parameters
 
-Tm = 5;  Nm = 60;                       % sampling time [s], number of coefficients
-Gd = c2d(G, Tm, 'zoh');
-[h, tk] = impulse(Gd, (Nm-1)*Tm);       % h(k, out, in), tk in seconds
-k = round(tk/Tm);
+Tm = 5;                         % Sampling time [s]
+Nm = 60;                        % Number of matrices H_1,...,H_Nm
+Gdisc = c2d(G, Tm, 'zoh');         % Discretization with piecewise-constant inputs
+tm = (0:Nm)' * Tm;
+
+hImpulse = impulse(Gdisc, tm);
+Hmodel = Tm * hImpulse(2:end,:,:); % Remove the direct term at t = 0 and correct the scaling
+
+% Markov coefficients from normalized nonlinear step responses
+S1m = interp1(T10_F1, S10_F1(:,1:2), tm);
+S2m = interp1(T10_F2, S10_F2(:,1:2), tm);
+
+Hdata = zeros(Nm,2,2);
+
+Hdata(:,:,1) = diff(S1m,1,1);
+Hdata(:,:,2) = diff(S2m,1,1);
+
+% Plot each input-output channel
+ell = (1:Nm)';
 
 figure('Color','w');
-for j = 1:2
-    for i = 1:4
-        subplot(4,2,(i-1)*2+j);
-        stem(k, h(:,i,j), 'filled', 'MarkerSize',3); grid on
-        xlabel('k'); ylabel(sprintf('h_{%d%d}[k]',i,j));
+
+for i = 1:2
+    for j = 1:2
+        subplot(2,2,(i-1)*2+j);
+
+        stem(ell, Hmodel(:,i,j), ...
+             'filled', 'MarkerSize',3);
+
+        grid on
+        ylabel(sprintf('H_{%d%d}',i,j));
     end
 end
-sgtitle(sprintf('Markov parameters, T_s = %d s',Tm));
 
-% Check directly from the normalized step data: h[k] = S[k] - S[k-1]
-Sm = interp1(T10_F1, S10_F1, (0:Tm:(Nm-1)*Tm)');
-hdata = diff([0; Sm(:,1)]);             % compare with h(:,1,1) shifted by one sample
+sgtitle(sprintf('Markov parameters, T_m = %g s', Tm));
+
+
+
+%% Keep results
+
+Gidentified = G;
+save('identifiedModel.mat', 'Gidentified', 'us', 'p');
+
+Hidentified = Hmodel;
+Hstep = Hdata;
+save('markovProblem4.mat', 'Hidentified', 'Hstep', 'Tm', 'Nm', 'p', 'us');
+
+sysIdentifiedDisc = c2d(Gidentified, Ts, 'zoh');
+[Aid, Bid, Cyid, Did] = ssdata(sysIdentifiedDisc);

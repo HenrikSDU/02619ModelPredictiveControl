@@ -15,7 +15,7 @@ tf = sim_min*60;
 t = (0:Ts:tf)';
 N = length(t);
 
-nx = 4; nu = 2; ny = 4; nz = 2;
+nx = 4; nu = 2; ny = 2; nz = 2;
 
 %% Piecewise-constant stochastic disturbances
 
@@ -102,7 +102,7 @@ for j = 1:length(controllerTypes)
         % Sampling interval
         Ts_k = t(k+1) - t(k);
 
-        [u(:,k), i_state, y_prev] = PIDControl(i_state, y_prev, zbar, y(1:2,k), us, Kp, Ti, Td, Ts_k, umin, umax, controllerType);
+        [u(:,k), i_state, y_prev] = PIDControl(i_state, y_prev, zbar, y(:,k), us, Kp, Ti, Td, Ts_k, umin, umax, controllerType);
 
         odefun = @(time,state) ModifiedFourTankSystem(time, state, u(:,k), p, d(:,k));
 	    [Tk,Xk] = ode45(odefun, [t(k) t(k+1)], x(:,k));
@@ -294,10 +294,10 @@ for j = 1:length(controllerTypes)
         Ts_k = t(k+1) - t(k);
 
         % PID controller uses measured levels
-        [u(:,k), i_state, y_prev] = PIDControl(i_state, y_prev, zbar, y(1:2,k), us, Kp, Ti, Td, Ts_k, umin, umax, controllerType);
+        [u(:,k), i_state, y_prev] = PIDControl(i_state, y_prev, zbar, y(:,k), us, Kp, Ti, Td, Ts_k, umin, umax, controllerType);
 
         odefun = @(time,state) ModifiedFourTankSystem(time, state, u(:,k), p, d(:,k));
-	[Tk,Xk] = ode45(odefun, [t(k) t(k+1)], x(:,k));
+	    [Tk,Xk] = ode45(odefun, [t(k) t(k+1)], x(:,k));
 
         % Final state of current interval
         x(:,k+1) = Xk(end,:)';

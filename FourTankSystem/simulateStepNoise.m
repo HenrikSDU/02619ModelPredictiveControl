@@ -1,15 +1,16 @@
 function [T, X, H, Y, D] = simulateStepNoise(us, xs, p, stepSize, inputIndex, tf, dMean, Ts, sigmaProcess, sigmaMeasurement)
 
     % Simulation time
-    t = (0:Ts:tf)';
-    N = length(t);
+    T = (0:Ts:tf)';
+    N = length(T);
 
     nx = length(xs);
-    ny = 4;
+    ny = 2;
+    nh = 4;
 
     % Allocate
     X = zeros(N,nx);
-    H = zeros(N,ny);
+    H = zeros(N,nh);
     Y = zeros(N,ny);
     D = zeros(N,2);
 
@@ -24,23 +25,10 @@ function [T, X, H, Y, D] = simulateStepNoise(us, xs, p, stepSize, inputIndex, tf
     % Initial disturbance
     D(1,:) = dMean';
 
-    % Measurement noise covariance
-    R = sigmaMeasurement^2 * eye(ny);
-
-    % Cholesky factor
-    L = chol(R,'lower');
-
-    % Initial measurements
-    h = FourTankSystemSensor(xs,p);
-
-    H(1,:) = h';
+    H(1,:) = FourTankSystemLevels(xs,p)';
     Y(1,:) = FourTankSystemSensorNoise(X(1,:)', p, sigmaMeasurement)';
 
-    % Time vector for ode solver
-    T = t;
-
     % Simulation
-
     for k = 1:N-1
 
         % Current disturbance
@@ -49,7 +37,7 @@ function [T, X, H, Y, D] = simulateStepNoise(us, xs, p, stepSize, inputIndex, tf
         % Integrate nonlinear four-tank model
         [~,Xk] = ode15s( ...
             @(time,state) ModifiedFourTankSystem(time,state,u,p,d), ...
-            [t(k) t(k+1)], ...
+            [T(k) T(k+1)], ...
             X(k,:)' );
 
         % Store final state
@@ -57,11 +45,10 @@ function [T, X, H, Y, D] = simulateStepNoise(us, xs, p, stepSize, inputIndex, tf
 
         D(k+1,:) = dMean' + sigmaProcess*randn(1,2); % Process noise
 
-        h = FourTankSystemSensor(X(k+1,:)',p); % True levels
+        xk = X(k+1,:)';
 
-        H(k+1,:) = h';
-
-        Y(k+1,:) = FourTankSystemSensorNoise(X(k+1,:)', p, sigmaMeasurement)';
+        H(k+1,:) = FourTankSystemLevels(xk,p)';
+        Y(k+1,:) = FourTankSystemSensorNoise(xk,p,sigmaMeasurement)';
 
     end
 

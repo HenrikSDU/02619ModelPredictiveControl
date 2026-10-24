@@ -1,7 +1,6 @@
 function y = FourTankSystemSensor(xk,p)
-    % Extract dimensions and density from parameters
-    rho = p(12,1);
-    A = p(5:8);
-    h = xk ./ (A*rho); % Calculate the levels
-    y = h;
+    % Measured levels: tanks 1 and 2 [cm]
+
+    h = FourTankSystemLevels(xk,p);
+    y = h(1:2);
 end

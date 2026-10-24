@@ -8,7 +8,8 @@ p = FourTankStandardParams();
 
 nx = 4;
 nu = 2;
-ny = 4;
+nh = 4;
+ny = 2;
 nz = 2;
 
 %% Simulation scenario
@@ -67,6 +68,7 @@ F4 = F4(1);
 %% Simulation
 
 x = zeros(nx,N);
+h = zeros(nh,N);
 y = zeros(ny,N);
 z = zeros(nz,N);
 
@@ -80,7 +82,8 @@ for k = 1:N-1
 
     uk = u(:,k);
     dk = d(:,k);
-
+    
+    h(:,k) = FourTankSystemLevels(x(:,k),p);
     y(:,k) = FourTankSystemSensor(x(:,k),p);
     z(:,k) = FourTankSystemOutput(x(:,k),p);
 
@@ -97,6 +100,7 @@ for k = 1:N-1
 end
 
 % Compute outputs at final sampling instant
+h(:,N) = FourTankSystemLevels(x(:,N),p);
 y(:,N) = FourTankSystemSensor(x(:,N),p);
 z(:,N) = FourTankSystemOutput(x(:,N),p);
 
@@ -130,52 +134,36 @@ xlim([0 sim_min]);
 
 figure;
 
-subplot(2,2,1);
-plot(t/60,z(1,:),'LineWidth',2);
-xlabel('Time [min]');
-ylabel('h_1 [cm]');
-title('Tank 1');
-grid on;
-xlim([0 sim_min]);
+for i = 1:4
+    subplot(2,2,i);
 
-subplot(2,2,2);
-plot(t/60,z(2,:),'LineWidth',2);
-xlabel('Time [min]');
-ylabel('h_2 [cm]');
-title('Tank 2');
-grid on;
-xlim([0 sim_min]);
+    plot(t/60,h(i,:),'LineWidth',1.5, ...
+         'DisplayName','True level');
+    hold on;
 
-subplot(2,2,3);
-plot(t/60,y(3,:),'LineWidth',2);
-xlabel('Time [min]');
-ylabel('h_3 [cm]');
-title('Tank 3');
-grid on;
-xlim([0 sim_min]);
+    if i <= ny
+        plot(t/60,y(i,:),'--','LineWidth',1.2, ...
+     'DisplayName','Measured level');
+    end
 
-subplot(2,2,4);
-plot(t/60,y(4,:),'LineWidth',2);
-xlabel('Time [min]');
-ylabel('h_4 [cm]');
-title('Tank 4');
-grid on;
-xlim([0 sim_min]);
+    xlabel('Time [min]');
+    ylabel(sprintf('h_%d [cm]',i));
+    title(sprintf('Tank %d',i));
+    legend('Location','best');
+    grid on;
+    xlim([0 sim_min]);
+end
 
 %% Plot all outputs together
 
 figure;
 
-plot(t/60,y(1,:),'LineWidth',2);
-hold on;
-plot(t/60,y(2,:),'LineWidth',2);
-plot(t/60,y(3,:),'LineWidth',2);
-plot(t/60,y(4,:),'LineWidth',2);
+plot(t/60,h','LineWidth',2);
 
 xlabel('Time [min]');
 ylabel('Tank level [cm]');
 legend('h_1','h_2','h_3','h_4');
-title('Four-Tank System Outputs');
+title('True Tank Levels');
 grid on;
 xlim([0 sim_min]);
 
@@ -189,6 +177,7 @@ disturbanceType = 'piecewise';
 %% Simulation
 
 x = zeros(nx,N);
+h = zeros(nh,N);
 y = zeros(ny,N);
 z = zeros(nz,N);
 
@@ -205,6 +194,7 @@ for k = 1:N-1
     dk = d(:,k);
 
     % Sensor measurements and controlled outputs
+    h(:,k) = FourTankSystemLevels(x(:,k),p);
     y(:,k) = FourTankSystemSensorNoise(x(:,k),p);
     z(:,k) = FourTankSystemOutput(x(:,k),p);
 
@@ -224,6 +214,7 @@ for k = 1:N-1
 end
 
 % Outputs at final sampling instant
+h(:,N) = FourTankSystemLevels(x(:,N),p);
 y(:,N) = FourTankSystemSensorNoise(x(:,N),p);
 z(:,N) = FourTankSystemOutput(x(:,N),p);
 
@@ -257,52 +248,36 @@ xlim([0 sim_min]);
 
 figure;
 
-subplot(2,2,1);
-plot(t/60,y(1,:),'LineWidth',2);
-xlabel('Time [min]');
-ylabel('h_1 [cm]');
-title('Tank 1');
-grid on;
-xlim([0 sim_min]);
+for i = 1:4
+    subplot(2,2,i);
 
-subplot(2,2,2);
-plot(t/60,y(2,:),'LineWidth',2);
-xlabel('Time [min]');
-ylabel('h_2 [cm]');
-title('Tank 2');
-grid on;
-xlim([0 sim_min]);
+    plot(t/60,h(i,:),'LineWidth',1.5, ...
+         'DisplayName','True level');
+    hold on;
 
-subplot(2,2,3);
-plot(t/60,y(3,:),'LineWidth',2);
-xlabel('Time [min]');
-ylabel('h_3 [cm]');
-title('Tank 3');
-grid on;
-xlim([0 sim_min]);
+    if i <= ny
+        plot(t/60,y(i,:),'--','LineWidth',1.2, ...
+     'DisplayName','Measured level');
+    end
 
-subplot(2,2,4);
-plot(t/60,y(4,:),'LineWidth',2);
-xlabel('Time [min]');
-ylabel('h_4 [cm]');
-title('Tank 4');
-grid on;
-xlim([0 sim_min]);
+    xlabel('Time [min]');
+    ylabel(sprintf('h_%d [cm]',i));
+    title(sprintf('Tank %d',i));
+    legend('Location','best');
+    grid on;
+    xlim([0 sim_min]);
+end
 
 %% Plot all outputs together
 
 figure;
 
-plot(t/60,y(1,:),'LineWidth',2);
-hold on;
-plot(t/60,y(2,:),'LineWidth',2);
-plot(t/60,y(3,:),'LineWidth',2);
-plot(t/60,y(4,:),'LineWidth',2);
+plot(t/60,h','LineWidth',2);
 
 xlabel('Time [min]');
 ylabel('Tank level [cm]');
 legend('h_1','h_2','h_3','h_4');
-title('Four-Tank System Outputs');
+title('True Tank Levels');
 grid on;
 xlim([0 sim_min]);
 
@@ -321,6 +296,7 @@ rng(1);
 %% Simulation
 
 x = zeros(nx,N);
+h = zeros(nh,N);
 y = zeros(ny,N);
 z = zeros(nz,N);
 
@@ -329,6 +305,7 @@ x(:,1) = x0;
 for k = 1:N-1
 
     % Outputs at current sampling instant
+    h(:,k) = FourTankSystemLevels(x(:,k),p);
 
     % True controlled outputs
     z(:,k) = FourTankSystemOutput(x(:,k),p);
@@ -352,7 +329,7 @@ for k = 1:N-1
 end
 
 % Outputs at final sampling instant
-
+h(:,N) = FourTankSystemLevels(x(:,N),p);
 z(:,N) = FourTankSystemOutput(x(:,N),p);
 y(:,N) = FourTankSystemSensorNoise(x(:,N),p);
 
@@ -395,66 +372,35 @@ xlim([0 sim_min]);
 
 figure;
 
-subplot(2,2,1);
+for i = 1:4
+    subplot(2,2,i);
 
-plot(t/60,y(1,:),'LineWidth',1.5);
+    plot(t/60,h(i,:),'LineWidth',1.5, ...
+         'DisplayName','True level');
+    hold on;
 
-xlabel('Time [min]');
-ylabel('h_1 [cm]');
-legend('Measured');
-title('Tank 1');
-grid on;
-xlim([0 sim_min]);
+    if i <= ny
+        plot(t/60,y(i,:),'--','LineWidth',1.2, ...
+     'DisplayName','Measured level');
+    end
 
-subplot(2,2,2);
-
-
-plot(t/60,y(2,:),'LineWidth',1.5);
-
-xlabel('Time [min]');
-ylabel('h_2 [cm]');
-legend('Measured');
-title('Tank 2');
-grid on;
-xlim([0 sim_min]);
-
-subplot(2,2,3);
-
-plot(t/60,y(3,:),'LineWidth',1.5);
-
-xlabel('Time [min]');
-ylabel('h_3 [cm]');
-legend('Measured');
-title('Tank 3');
-grid on;
-xlim([0 sim_min]);
-
-subplot(2,2,4);
-
-plot(t/60,y(4,:),'LineWidth',1.5);
-
-xlabel('Time [min]');
-ylabel('h_4 [cm]');
-legend('Measured');
-title('Tank 4');
-grid on;
-xlim([0 sim_min]);
+    xlabel('Time [min]');
+    ylabel(sprintf('h_%d [cm]',i));
+    title(sprintf('Tank %d',i));
+    legend('Location','best');
+    grid on;
+    xlim([0 sim_min]);
+end
 
 %% Plot all true outputs
 
 figure;
 
-plot(t/60,y(1,:),'LineWidth',2);
-hold on;
-plot(t/60,y(2,:),'LineWidth',2);
-hold on;
-plot(t/60,y(3,:),'LineWidth',2);
-hold on;
-plot(t/60,y(4,:),'LineWidth',2);
+plot(t/60,h','LineWidth',2);
 
 xlabel('Time [min]');
 ylabel('Tank level [cm]');
 legend('h_1','h_2','h_3','h_4');
-title('Four-Tank System Outputs');
+title('True Tank Levels');
 grid on;
 xlim([0 sim_min]);
