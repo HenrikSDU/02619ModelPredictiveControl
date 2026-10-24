@@ -279,3 +279,9 @@ differenceH = H3 - Hlinearized;
 
 fprintf('Maximum Markov difference: model 3 vs model 1 = %.3e\n', ...
         max(abs(differenceH(:))));
+
+
+%% Save the linear model
+
+save('linearModel.mat', 'Adisc', 'Bdisc', 'Edisc', 'Cdisc', 'Ts', 'xss', 'yss', 'us', 'd', 'p');
+save('linearModel3.mat', 'A3disc','B3disc','C3disc','Q3', 'Ts','xss3','yss','us','d','p');
