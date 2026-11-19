@@ -503,11 +503,11 @@ sgtitle(sprintf('Markov parameters, T_m = %g s', Tm));
 %% Keep results
 
 Gidentified = G;
-save('identifiedModel.mat', 'Gidentified', 'us', 'p');
+save('FourTankSystem/data/identifiedModel.mat', 'Gidentified', 'us', 'p');
 
 Hidentified = Hmodel;
 Hstep = Hdata;
-save('markovProblem4.mat', 'Hidentified', 'Hstep', 'Tm', 'Nm', 'p', 'us');
+save('FourTankSystem/data/markovProblem4.mat', 'Hidentified', 'Hstep', 'Tm', 'Nm', 'p', 'us');
 
 sysIdentifiedDisc = c2d(Gidentified, Ts, 'zoh');
 [Aid, Bid, Cyid, Did] = ssdata(sysIdentifiedDisc);
