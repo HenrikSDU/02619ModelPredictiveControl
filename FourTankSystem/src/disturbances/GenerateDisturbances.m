@@ -5,7 +5,7 @@ function [d, F3, F4] = GenerateDisturbances(t, Ts, disturbanceType, seed)
     % Inputs:
     %   t               - Sampling-time vector [s]
     %   Ts              - Sampling time [s]
-    %   disturbanceType - 'fixed', 'piecewise', or 'langevin'
+    %   disturbanceType - 'fixed', 'piecewise', 'langevin' or 'langevinstatedependent'
     %   seed            - Random-number seed
     %
     % Outputs:

@@ -2,6 +2,10 @@ close all;
 clear;
 clc;
 
+%% To save plots
+scriptDir = fileparts(mfilename('fullpath'));
+projectRoot = fileparts(scriptDir); % Goes up one level from 'scripts' to 'FourTankSystem'
+outDir = fullfile(projectRoot, 'figs', 'openloopdist');
 %% Parameters
 
 p = FourTankStandardParams();
@@ -106,7 +110,7 @@ z(:,N) = FourTankSystemOutput(x(:,N),p);
 
 %% Plot inputs and disturbances
 
-figure;
+fig1 = figure;
 
 subplot(2,1,1);
 stairs(t/60,F1,'LineWidth',2);
@@ -130,9 +134,12 @@ title('Fixed Disturbances');
 grid on;
 xlim([0 sim_min]);
 
+
+exportgraphics(fig1, fullfile(outDir, 'inputs_fixed_disturbances.png'), 'Resolution', 300);
+
 %% Plot tank levels
 
-figure;
+fig2 = figure;
 
 for i = 1:4
     subplot(2,2,i);
@@ -153,10 +160,10 @@ for i = 1:4
     grid on;
     xlim([0 sim_min]);
 end
-
+exportgraphics(fig2, fullfile(outDir, 'tank_levels_subplots_fixed_disturbance.png'), 'Resolution', 300);
 %% Plot all outputs together
 
-figure;
+fig3 = figure;
 
 plot(t/60,h','LineWidth',2);
 
@@ -167,7 +174,7 @@ title('True Tank Levels');
 grid on;
 xlim([0 sim_min]);
 
-
+exportgraphics(fig3, fullfile(outDir, 'true_tank_levels_fixed_disturbance.png'), 'Resolution', 300);
 %% Stochastic piecewise-constant disturbances
 
 disturbanceType = 'piecewise';
@@ -220,7 +227,7 @@ z(:,N) = FourTankSystemOutput(x(:,N),p);
 
 %% Plot inputs
 
-figure;
+fig4 = figure;
 
 subplot(2,1,1);
 stairs(t/60,F1,'LineWidth',2);
@@ -244,9 +251,10 @@ title('Piecewise-Constant Stochastic Disturbances');
 grid on;
 xlim([0 sim_min]);
 
+exportgraphics(fig4, fullfile(outDir, 'inputs_piecewise_disturbances.png'), 'Resolution', 300);
 %% Plot tank levels
 
-figure;
+fig5 = figure;
 
 for i = 1:4
     subplot(2,2,i);
@@ -267,10 +275,10 @@ for i = 1:4
     grid on;
     xlim([0 sim_min]);
 end
-
+exportgraphics(fig5, fullfile(outDir, 'tank_levels_subplots_piecewise_disturbance.png'), 'Resolution', 300);
 %% Plot all outputs together
 
-figure;
+fig6 = figure;
 
 plot(t/60,h','LineWidth',2);
 
@@ -281,7 +289,7 @@ title('True Tank Levels');
 grid on;
 xlim([0 sim_min]);
 
-
+exportgraphics(fig6, fullfile(outDir, 'true_tank_levels_piecewise_disturbance.png'), 'Resolution', 300);
 
 %% Langevin disturbance parameters
 
@@ -340,7 +348,7 @@ F4 = d(2,:);
 
 %% Plot inputs and disturbances
 
-figure;
+fig7 = figure;
 
 subplot(2,1,1);
 
@@ -368,9 +376,10 @@ title('Langevin Disturbances');
 grid on;
 xlim([0 sim_min]);
 
+exportgraphics(fig7, fullfile(outDir, 'inputs_langevin_disturbances.png'), 'Resolution', 300);
 %% Plot true and measured tank levels
 
-figure;
+fig8 = figure;
 
 for i = 1:4
     subplot(2,2,i);
@@ -391,10 +400,10 @@ for i = 1:4
     grid on;
     xlim([0 sim_min]);
 end
-
+exportgraphics(fig8, fullfile(outDir, 'tank_levels_subplots_langevin_disturbance.png'), 'Resolution', 300);
 %% Plot all true outputs
 
-figure;
+fig9 = figure;
 
 plot(t/60,h','LineWidth',2);
 
@@ -404,3 +413,126 @@ legend('h_1','h_2','h_3','h_4');
 title('True Tank Levels');
 grid on;
 xlim([0 sim_min]);
+exportgraphics(fig9, fullfile(outDir, 'true_tank_levels_langevin_disturbance.png'), 'Resolution', 300);
+%% Langevin disturbance (State Dependent) parameters
+
+disturbanceType = 'langevinstatedependent';
+
+[d, F3, F4] = GenerateDisturbances(t, Ts, disturbanceType, 1);
+
+%% Random number generator
+
+rng(1);
+
+%% Simulation
+
+x = zeros(nx,N);
+h = zeros(nh,N);
+y = zeros(ny,N);
+z = zeros(nz,N);
+
+x(:,1) = x0;
+
+for k = 1:N-1
+
+    % Outputs at current sampling instant
+    h(:,k) = FourTankSystemLevels(x(:,k),p);
+
+    % True controlled outputs
+    z(:,k) = FourTankSystemOutput(x(:,k),p);
+
+    % Noisy measurements
+    y(:,k) = FourTankSystemSensorNoise(x(:,k),p);
+
+    % System simulation
+
+    uk = u(:,k);
+    dk = d(:,k);
+
+    [Tk,Xk] = ode15s( ...
+        @(time,state) ModifiedFourTankSystem( ...
+            time,state,uk,p,dk), ...
+        [t(k) t(k+1)], ...
+        x(:,k));
+
+    x(:,k+1) = Xk(end,:)';
+
+end
+
+% Outputs at final sampling instant
+h(:,N) = FourTankSystemLevels(x(:,N),p);
+z(:,N) = FourTankSystemOutput(x(:,N),p);
+y(:,N) = FourTankSystemSensorNoise(x(:,N),p);
+
+% Extract disturbances
+
+F3 = d(1,:);
+F4 = d(2,:);
+
+%% Plot inputs and disturbances
+
+fig10 = figure;
+
+subplot(2,1,1);
+
+stairs(t/60,F1,'LineWidth',2);
+hold on;
+stairs(t/60,F2,'LineWidth',2);
+
+xlabel('Time [min]');
+ylabel('Pump flow [cm^3/s]');
+legend('F_1','F_2');
+title('Pump Inputs');
+grid on;
+xlim([0 sim_min]);
+
+subplot(2,1,2);
+
+plot(t/60,F3,'LineWidth',1.5);
+hold on;
+plot(t/60,F4,'LineWidth',1.5);
+
+xlabel('Time [min]');
+ylabel('Disturbance flow [cm^3/s]');
+legend('F_3','F_4');
+title('Langevin Disturbances (State Dependent)');
+grid on;
+xlim([0 sim_min]);
+exportgraphics(fig10, fullfile(outDir, 'inputs_langevinstdep_disturbances.png'), 'Resolution', 300);
+%% Plot true and measured tank levels
+
+fig11 = figure;
+
+for i = 1:4
+    subplot(2,2,i);
+
+    plot(t/60,h(i,:),'LineWidth',1.5, ...
+         'DisplayName','True level');
+    hold on;
+
+    if i <= ny
+        plot(t/60,y(i,:),'--','LineWidth',1.2, ...
+     'DisplayName','Measured level');
+    end
+
+    xlabel('Time [min]');
+    ylabel(sprintf('h_%d [cm]',i));
+    title(sprintf('Tank %d',i));
+    legend('Location','best');
+    grid on;
+    xlim([0 sim_min]);
+end
+exportgraphics(fig11, fullfile(outDir, 'tank_levels_subplots_langevinstdep_disturbance.png'), 'Resolution', 300);
+%% Plot all true outputs
+
+fig12 = figure;
+
+plot(t/60,h','LineWidth',2);
+
+xlabel('Time [min]');
+ylabel('Tank level [cm]');
+legend('h_1','h_2','h_3','h_4');
+title('True Tank Levels');
+grid on;
+xlim([0 sim_min]);
+exportgraphics(fig12, fullfile(outDir, 'true_tank_levels_langevinstdep_disturbance.png'), 'Resolution', 300);
