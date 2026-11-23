@@ -245,7 +245,10 @@ sysU3 = ss(A3, B3, C3, zeros(2,2));
 Gu3 = minreal(tf(sysU3))
 
 %% Discretization of the deterministic drift and commands
+[A3disc, B3disc, Q3] = c2dzohsw(A3,B3,Sigma3,Ts);
+C3disc = C3;
 
+%{
 sysU3disc = c2d(sysU3, Ts, 'zoh');
 
 A3disc = sysU3disc.A;
@@ -263,7 +266,7 @@ V = expm([-A3,          Sigma3*Sigma3';
 
 Q3 = A3disc * V(1:nx3,nx3+1:2*nx3);
 Q3 = (Q3 + Q3') / 2;  % Remove numerical asymmetry
-
+%}
 %% Command-to-output Markov parameters
 
 H3 = zeros(Nm,2,2);
