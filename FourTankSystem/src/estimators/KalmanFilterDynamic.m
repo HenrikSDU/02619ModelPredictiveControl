@@ -1,4 +1,4 @@
-function [xFiltered, xPredictedNext, PpredictedNext, innovation, Kfx] = KalmanFilterDynamic( ...
+function [x_hat, xPredictedNext, PpredictedNext, innovation, Kfx] = KalmanFilterDynamic( ...
           xPredicted, Ppredicted, y, u, A, B, G, C, Q, R)
 
     % Measurement update
@@ -7,12 +7,12 @@ function [xFiltered, xPredictedNext, PpredictedNext, innovation, Kfx] = KalmanFi
     Re = C*Ppredicted*C' + R;
     Kfx = (Ppredicted*C') / Re;
 
-    xFiltered = xPredicted + Kfx*innovation;
+    x_hat = xPredicted + Kfx*innovation;
 
     Pfiltered = Ppredicted - Kfx*Re*Kfx';
 
     % Time update
-    xPredictedNext = A*xFiltered + B*u;
+    xPredictedNext = A*x_hat + B*u;
     PpredictedNext = A*Pfiltered*A' + G*Q*G';
 
 end

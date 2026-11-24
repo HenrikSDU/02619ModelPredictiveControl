@@ -6,6 +6,8 @@ close all;
 
 data = load('linearModel.mat');
 
+p = FourTankStandardParams();
+
 A = data.Adisc;
 B = data.Bdisc;
 E = data.Edisc;
@@ -25,7 +27,22 @@ N = numel(t);
 rng(1);
 
 % Constant nominal pump flows: zero input deviations
-U = zeros(nu,N);
+F1 = zeros(1,N);
+F2 = zeros(1,N);
+
+F1(t < 5*60) = 300;
+F1(t >= 5*60 & t < 10*60) = 350;
+F1(t >= 10*60 & t < 15*60) = 250;
+F1(t >= 15*60) = 300;
+
+F2(t < 5*60) = 300;
+F2(t >= 5*60 & t < 10*60) = 250;
+F2(t >= 10*60 & t < 15*60) = 350;
+F2(t >= 15*60) = 300;
+
+U = [F1;
+     F2];
+
 
 % Unknown changes in mean disturbance flows [cm^3/s]
 Dstep = zeros(nd,N);

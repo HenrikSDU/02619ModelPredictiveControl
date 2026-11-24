@@ -6,7 +6,15 @@ function y = FourTankSystemSensorNoise(xk,p,sigma_h)
     end
 
     y = FourTankSystemSensor(xk,p);
-    v = sigma_h * randn(2,1);
+    
+    w = randn(2, 1);
+
+    if isscalar(sigma_h)
+        v = sigma_h * w;
+    else % R is given
+        LR = chol(sigma_h,'lower');
+        v = LR * w;
+    end
 
     y = y + v;
 end

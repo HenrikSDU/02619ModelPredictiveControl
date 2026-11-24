@@ -167,12 +167,12 @@ sysDdisc = sysDiscrete(:,3:4);
 P4 = load('markovProblem4.mat');
 
 Nm = P4.Nm;
-ell = (1:Nm)';
+k = (1:Nm)';
 
 % Markov parameters from the linearized state-space model
 Hlinearized = zeros(Nm,2,2);
 
-% At iteration ell: M = Adisc^(ell-1) * Bdisc
+% At iteration k: M = Adisc^(k-1) * Bdisc
 M = Bdisc;
 
 for n = 1:Nm
@@ -188,19 +188,19 @@ for i = 1:2
     for j = 1:2
         subplot(2,2,(i-1)*2+j);
 
-        plot(ell, Hlinearized(:,i,j), ...
+        plot(k, Hlinearized(:,i,j), ...
              'LineWidth',1.4);
         hold on
 
-        plot(ell, P4.Hidentified(:,i,j), '--', ...
+        plot(k, P4.Hidentified(:,i,j), '--', ...
              'LineWidth',1.2);
 
-        plot(ell, P4.Hstep(:,i,j), ':', ...
+        plot(k, P4.Hstep(:,i,j), ':', ...
              'LineWidth',1.4);
 
         grid on
-        xlabel('$\ell$', 'Interpreter','latex');
-        ylabel(sprintf('$[H_{\\ell}]_{%d%d}$',i,j), ...
+        xlabel('$k$', 'Interpreter','latex');
+        ylabel(sprintf('$[H_{k}]_{%d%d}$',i,j), ...
                'Interpreter','latex');
 
         legend('Linearized model', ...
@@ -245,7 +245,7 @@ sysU3 = ss(A3, B3, C3, zeros(2,2));
 Gu3 = minreal(tf(sysU3))
 
 %% Discretization of the deterministic drift and commands
-[A3disc, B3disc, Q3] = c2dzohsw(A3,B3,Sigma3,Ts);
+[A3disc, B3disc, Q3] = c2dzohsw(A3,B3,Sigma3,Ts)
 C3disc = C3;
 
 %{
